@@ -2,7 +2,11 @@
 
 Shellcode loader that embeds XOR-encrypted shellcode into a DLL and clones exports to a valid Windows library for DLL hijacking.
 
-![](https://assets.bwbx.io/images/users/iqjWHBFdfxIU/iMorSlUY7xpM/v5/-1x-1.png)
+![](https://assets.bwbx.io/images/users/iqjWHBFdfxIU/iMorSlUY7xpM/v5/-1x-1.png | 500)
+
+Requirements:
+- Python3
+- Visual Studio
 
 ```
 cd KaiCenat
